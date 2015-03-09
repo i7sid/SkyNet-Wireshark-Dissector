@@ -1,0 +1,30 @@
+#
+
+include ..\config.nmake
+
+all: SkyNet-Wireshark-Dissector
+
+SkyNet-Wireshark-Dissector:: 
+	cd SkyNet-Wireshark-Dissector
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake
+	cd ..
+
+clean:
+	cd SkyNet-Wireshark-Dissector
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake clean
+	cd ..
+
+distclean: clean
+	cd SkyNet-Wireshark-Dissector
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake distclean
+	cd ..
+
+maintainer-clean: distclean
+	cd SkyNet-Wireshark-Dissector
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake maintainer-clean
+	cd ..
+
+install-plugins:
+!IFDEF ENABLE_LIBWIRESHARK
+	xcopy SkyNet-Wireshark-Dissector\*.dll ..\$(INSTALL_DIR)\plugins\$(VERSION) /d
+!ENDIF

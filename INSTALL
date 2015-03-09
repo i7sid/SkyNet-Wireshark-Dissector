@@ -1,0 +1,23 @@
+1.) Building an out-of-source plugin with cmake:
+
+You need to have the wireshark headers installed.
+
+To build with cmake (in a separate build/ directory):
+  mkdir build
+  cd build
+  cmake ..
+  make
+  make install
+
+This will build the .so plugin for wireshark and install it into the user's 
+~/.wireshark/plugins/ directory, where wireshark will load plugins from.
+
+
+
+
+2.) Building an in-source plugin
+
+It is also possible to build the plugin within the wireshark sources.
+
+You need to get the wireshark sources, and then move this plugin to the plugin folder.
+For more information on how to compile see the Wireshark docs(wireshark/docs/README.plugins) and the Custom example files
