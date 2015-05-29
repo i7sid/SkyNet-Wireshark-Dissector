@@ -45,6 +45,7 @@ set(LINK_MODE_MODULE MODULE)
 set(DISSECTOR_SRC
     packet-skynet.c
     packet-sniffer.c
+    packet-wind_data.c
 )
 
 set(PLUGIN_FILES

@@ -38,27 +38,21 @@ static int proto_sniffer = -1;
 
 static heur_dissector_list_t diss_list = NULL;
 
-/* These are the handles of our subdissectors */
 
 static dissector_handle_t sniffer_handle;
 static void dissect_sniffer(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree);
 
 
+/* Die folgenden hf_ Variablen enthalten die IDs für die Headerfelder.
+ *  Sie werden von Wireshark gesetzt, wenn die Funktion
+ * proto_register_field_array aufgerufen wird.
+ */
 
-
-/* The following hf_* variables are used to hold the Wireshark IDs of
-* our header fields; they are filled out when we call
-* proto_register_field_array() in proto_register_sniffer()
-*/
-//static int hf_sniffer_pdu = -1;
-/** Kts attempt at defining the protocol */
 static gint hf_sniffer_rssi = -1;
 static gint hf_sniffer_transmission_time = -1;
 
-/* These are the ids of the subtrees that we may be creating */
+/* Das sind die IDs für die Subtrees, die wir erstellen */
 static gint ett_sniffer = -1;
-
-
 
 
 
@@ -114,13 +108,12 @@ void proto_register_sniffer (void)
     static gint *ett[] = {
         &ett_sniffer
     };
-    //if (proto_sniffer == -1) { /* execute protocol initialization only once */
     proto_sniffer = proto_register_protocol ("Sniffer Analye", "sniffer", "sniffer");
 
     proto_register_field_array (proto_sniffer, hf, array_length (hf));
     proto_register_subtree_array (ett, array_length (ett));
     register_dissector("sniffer", dissect_sniffer, proto_sniffer);
-#if VERSION_MINOR <= 10
+#if VERSION_MINOR <= 12
         if(diss_list == NULL)
             register_heur_dissector_list("sniffer",&diss_list);
 #else
@@ -136,7 +129,7 @@ void proto_reg_handoff_sniffer(void)
     if (!initialized) {
         initialized = TRUE;
         sniffer_handle = create_dissector_handle(dissect_sniffer, proto_sniffer);
-#if VERSION_MINOR <= 10
+#if VERSION_MINOR <= 12
         if(diss_list == NULL)
             register_heur_dissector_list("sniffer",&diss_list);
 #else

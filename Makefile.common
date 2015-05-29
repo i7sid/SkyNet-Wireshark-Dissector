@@ -27,7 +27,8 @@ PLUGIN_NAME = Skynet
 # Non-generated sources to be scanned for registration routines
 NONGENERATED_REGISTER_C_FILES = \
 	packet-skynet.c \
-	packet-sniffer.c
+	packet-sniffer.c \
+    packet-wind_data.c  
 
 # Non-generated sources
 NONGENERATED_C_FILES = \

@@ -38,38 +38,25 @@
 /* Wireshark ID of the it protocol */
 static int proto_skynet = -1;
 
+static heur_dissector_list_t diss_list = NULL;
 
-
-/* These are the handles of our subdissectors */
 
 static dissector_handle_t skynet_handle;
 static void dissect_skynet(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree);
 
 
+/* Die folgenden hf_ Variablen enthalten die IDs für die Headerfelder.
+ *  Sie werden von Wireshark gesetzt, wenn die Funktion
+ * proto_register_field_array aufgerufen wird.
+ */
 
-
-/* The following hf_* variables are used to hold the Wireshark IDs of
-* our header fields; they are filled out when we call
-* proto_register_field_array() in proto_register_skynet()
-*/
-//static int hf_skynet_pdu = -1;
-/** Kts attempt at defining the protocol */
 static gint hf_skynet_payload = -1;
 static gint hf_skynet_length = -1;
 static gint hf_skynet_preamble = -1;
 static gint hf_skynet_sync = -1;
 
-/* These are the ids of the subtrees that we may be creating */
+/* Das sind die IDs für die Subtrees, die wir erstellen */
 static gint ett_skynet = -1;
-static gint ett_skynet_humidity = -1;
-static gint ett_skynet_checksum = -1;
-static gint ett_skynet_type = -1;
-static gint ett_skynet_text = -1;
-
-
-
-
-
 
 
 
@@ -82,6 +69,10 @@ dissect_skynet(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 //    proto_tree *skynet_header_tree = NULL;
     guint32 payload_length = 0;
     guint length = tvb_captured_length(tvb);
+    tvbuff_t *next_tvb;
+#if VERSION_MINOR > 10
+        heur_dtbl_entry_t *dtbl_etry = NULL;
+#endif
 
     col_set_str(pinfo->cinfo, COL_PROTOCOL, PROTO_TAG_SKYNET);
     col_clear(pinfo->cinfo,COL_INFO);
@@ -102,12 +93,20 @@ dissect_skynet(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
         if(length>10)
         proto_tree_add_item(skynet_tree,hf_skynet_sync,tvb,8,2,FALSE);
         //Length
-        if(length>12) {
+        if(length>=12) {
             proto_tree_add_item(skynet_tree, hf_skynet_length, tvb, 10, 2, FALSE);
             //Payload
             if(payload_length+ 12 > length)
                 payload_length = tvb_captured_length_remaining(tvb,12);
             proto_tree_add_item(skynet_tree,hf_skynet_payload,tvb,12,payload_length,ENC_ASCII);
+
+            next_tvb = tvb_new_subset_remaining(tvb,12);
+
+        #if VERSION_MINOR <= 10
+            dissector_try_heuristic(diss_list,next_tvb,pinfo,tree,NULL);
+         #else
+            dissector_try_heuristic(diss_list,next_tvb,pinfo,tree,&dtbl_etry,NULL);
+        #endif
         }
     }
 }
@@ -134,7 +133,6 @@ void proto_register_skynet (void)
         { &hf_skynet_length,
           { "Payload length", "skynet.pl_length", FT_UINT8, BASE_DEC, NULL, 0x0,
             "length of the payload", HFILL }},
-
         { &hf_skynet_payload,
           { "Payload", "skynet.payload", FT_STRING, BASE_NONE, NULL, 0x0,
             "Payload", HFILL }},
@@ -147,10 +145,6 @@ void proto_register_skynet (void)
     };
     static gint *ett[] = {
         &ett_skynet,
-        &ett_skynet_humidity,
-        &ett_skynet_checksum,
-        &ett_skynet_type,
-        &ett_skynet_text
     };
     //if (proto_skynet == -1) { /* execute protocol initialization only once */
     proto_skynet = proto_register_protocol ("SKYNET Analyse", "skynet", "skynet");
@@ -158,6 +152,14 @@ void proto_register_skynet (void)
     proto_register_field_array (proto_skynet, hf, array_length (hf));
     proto_register_subtree_array (ett, array_length (ett));
     register_dissector("skynet", dissect_skynet, proto_skynet);
+
+#if VERSION_MINOR <= 12
+        if(diss_list == NULL)
+            register_heur_dissector_list("skynet",&diss_list);
+#else
+        if(diss_list == NULL)
+            diss_list = register_heur_dissector_list("skynet");
+#endif
     //}
 }
 
@@ -169,6 +171,13 @@ void proto_reg_handoff_skynet(void)
         heur_dissector_add("sniffer",dissect_skynet_heur,proto_skynet);
         skynet_handle = create_dissector_handle(dissect_skynet, proto_skynet);
         initialized = TRUE;
+#if VERSION_MINOR <= 12
+        if(diss_list == NULL)
+            register_heur_dissector_list("skynet",&diss_list);
+#else
+        if(diss_list == NULL)
+            diss_list = register_heur_dissector_list("skynet");
+#endif
         //heur_dissector_add("ip",dissect_SKYNET_heur,proto_skynet);
     }
 
